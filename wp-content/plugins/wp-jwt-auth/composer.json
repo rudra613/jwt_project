@@ -1,0 +1,14 @@
+{
+  "name": "rudra/wp-jwt-auth",
+  "description": "JWT authentication for WordPress REST API",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Rudra Pandit"
+    }
+  ],
+  "require": {
+    "firebase/php-jwt": "^6.11"
+  }
+}

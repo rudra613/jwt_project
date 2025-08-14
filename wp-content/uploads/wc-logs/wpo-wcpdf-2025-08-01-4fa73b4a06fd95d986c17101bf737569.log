@@ -1,0 +1,3 @@
+2025-08-01T07:42:13+00:00 CRITICAL Unable to create folder C:\xampp\htdocs\jwt_project/wp-content/uploads/wpo_wcpdf/attachments/
+2025-08-01T07:44:21+00:00 INFO Template setting migrated from C:/xampp/htdocs/jwt_project/wp-content/plugins/woocommerce-pdf-invoices-packing-slips/templates/Simple to default/Simple
+2025-08-01T07:44:22+00:00 CRITICAL Table 'jwt_project.wp_wcpdf_invoice_number' doesn't exist

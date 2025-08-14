@@ -1,0 +1,35 @@
+# WordPress core files
+wp-admin/
+wp-includes/
+
+# WordPress configuration
+wp-config.php
+
+# Log files and database
+*.log
+*.sql
+*.sqlite
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Node / Composer
+node_modules/
+vendor/
+
+# Uploaded media
+wp-content/uploads/
+
+# Themes & Plugins except your custom ones
+wp-content/plugins/*
+!wp-content/plugins/my-custom-plugin/
+wp-content/themes/*
+!wp-content/themes/my-custom-theme/
+
+# Cache files
+wp-content/cache/
+wp-content/advanced-cache.php
+
+# Environment files
+.env
