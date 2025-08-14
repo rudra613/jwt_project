@@ -5,3 +5,7 @@ require_once get_template_directory().'/inc/theme-setup.php';
 //echo "hello";
 //echo "how are you";
 //rudra
+/*
+* This is the test demo for the version tag update
+*
+*/
