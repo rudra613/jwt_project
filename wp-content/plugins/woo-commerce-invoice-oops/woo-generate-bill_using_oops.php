@@ -243,3 +243,4 @@ class Woo_Bill_Generator {
 }
 
 Woo_Bill_Generator::get_instance();// Initialize the plugin
+//git tag
