@@ -1,1 +1,0 @@
-[05-Aug-2025 04:19:55 UTC] PHP Warning:  Undefined variable $order_id in C:\xampp\htdocs\jwt_project\wp-content\plugins\woo-commerce-invoice-oops\woo-generate-bill_using_oops.php on line 240

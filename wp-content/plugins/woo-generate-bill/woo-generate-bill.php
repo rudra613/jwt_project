@@ -2,32 +2,34 @@
 /**
  * Plugin Name: WooCommerce Order Bill Generator
  * Description: Adds "Generate Bill" button in WooCommerce Orders admin to download PDF invoices.
- * Version: 1.1
+ * Version: 1.0
  * Author: Rudra Pandit
  */
 
-if (!defined('ABSPATH')) exit;
+if (!defined('ABSPATH')) exit;// Exit if accessed directly
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
 add_action('plugins_loaded', function () {
-    if (!class_exists('Dompdf\Dompdf')) {
-        require_once __DIR__ . '/vendor/autoload.php';
-        error_log("autoload vendor");
+    if (!class_exists('Dompdf\Dompdf')) { // check if dompdf is not already loaded so load otherwise skip
+        $autoload_path = plugin_dir_path(__FILE__) . 'vendor/autoload.php';
+        if (file_exists($autoload_path)) {
+            require_once $autoload_path;
+        }
     }
 });
 
 //adding column generate bill button
 add_action('init', function () {
     if (class_exists('\Automattic\WooCommerce\Utilities\OrderUtil') &&
-        \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()) {
-
+        \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled())//get the custom order table enabled
+         {
         add_filter('manage_woocommerce_page_wc-orders_columns', 'add_generate_bill_column');
         add_action('manage_woocommerce_page_wc-orders_custom_column', 'render_generate_bill_column', 10, 2);
     } else {
         add_filter('manage_edit-shop_order_columns', 'add_generate_bill_column');
-        add_action('manage_shop_order_posts_custom_column', 'render_generate_bill_column', 10, 2);
+         add_action('manage_shop_order_posts_custom_column', 'render_generate_bill_column', 10, 2);
     }
 });
 
@@ -36,11 +38,11 @@ function add_generate_bill_column($columns) {
 
     foreach ($columns as $key => $column) {
         $new_columns[$key] = $column;
-        if ($key === 'order_total') {
+       // if ($key === 'order_date') {
+        if($key === 'order_total'){
             $new_columns['generate_bill'] = __('Generate Bill', 'woocommerce');
         }
     }
-
     return $new_columns;
 }
 
@@ -48,31 +50,32 @@ function render_generate_bill_column($column, $order_or_post_id) {
     $order_id = is_object($order_or_post_id) && method_exists($order_or_post_id, 'get_id')
         ? $order_or_post_id->get_id()
         : $order_or_post_id;
-
+    // error_log($order_id);
+    //adding button generate bill column
     if ($column === 'generate_bill') {
+        //securly generate the pdf
         $url = wp_nonce_url(
-            admin_url('admin-ajax.php?action=generate_bill_pdf&order_id=' . $order_id),
+            admin_url('admin-ajax.php?action=generate_bill_pdf&order_id=' . $order_id),//orderid through ajax help generate the pdf
             'generate_bill_' . $order_id
         );
         echo '<a class="button tips" href="' . esc_url($url) . '" target="_blank">Generate Bill</a>';
     }
 }
 
-// PDF Generator
+// when called admin_ajax.php file called so create the pdf
 add_action('wp_ajax_generate_bill_pdf', 'handle_generate_bill_pdf');
 function handle_generate_bill_pdf() {
     $order_id = intval($_GET['order_id'] ?? 0);
-
     if (!wp_verify_nonce($_GET['_wpnonce'], 'generate_bill_' . $order_id)) {
         wp_die('Nonce verification failed');
     }
-
     $order = wc_get_order($order_id);
+    // error_log(print_r($order, true ));
     if (!$order) {
         wp_die('Order not found');
     }
 
-    ob_start();
+    ob_start();// start output buffering
     ?>
     <div class="invoice-box">
         <table cellpadding="0" cellspacing="0">
@@ -131,6 +134,10 @@ function handle_generate_bill_pdf() {
             </thead>
             <tbody>
                 <?php foreach ($order->get_items() as $item): 
+                $itemdata=$order->get_items();
+                // echo '<pre>';
+                // print_r($itemdata);
+                // echo '</pre>';
                     $product = $item->get_product();
                     $qty = $item->get_quantity();
                     $regular_price = $product ? $product->get_regular_price() : 0;
@@ -152,11 +159,17 @@ function handle_generate_bill_pdf() {
 
         <?php
         $order_taxes = $order->get_items('tax');
+        // echo "<pre>";
+        // print_r($order_taxes);
+        // echo "</pre>";
         if (!empty($order_taxes)) {
             echo '<h3>Tax Breakdown</h3>';
             echo '<table class="tax-table"><tr><th>Tax Name</th><th>Rate</th><th>Amount</th></tr>';
             foreach ($order_taxes as $tax_item) {
                 $tax_data = $tax_item->get_data();
+                // echo "<pre>";
+                // print_r($tax_data);     
+                // echo "</pre>";
                 $rate_id = $tax_data['rate_id'];
                 $rate_label = $tax_data['label'] ?: WC_Tax::get_rate_label($rate_id);
                 $tax_amount = $tax_data['tax_total'];
@@ -175,7 +188,7 @@ function handle_generate_bill_pdf() {
         </table>
 
         <h3>Total Amount: <?php echo $order->get_formatted_order_total(); ?></h3>
-
+        
         <br><br>
         <table style="width: 100%; margin-top: 40px;">
             <tr>
@@ -187,7 +200,7 @@ function handle_generate_bill_pdf() {
         </table>
     </div>
     <?php
-    $html = ob_get_clean();
+    $html = ob_get_clean();//output buffer clean
 
     $style = '
     <style>
@@ -204,14 +217,13 @@ function handle_generate_bill_pdf() {
     </style>';
 
     $options = new Options();
-    $options->set('isRemoteEnabled', true);
-    $options->set('defaultFont', 'DejaVu Sans');
+    $options->set('defaultFont', 'DejaVu Sans');//set default font of pdf
 
-    $dompdf = new Dompdf($options);
-    $dompdf->loadHtml('<html><head><meta charset="UTF-8">' . $style . '</head><body>' . $html . '</body></html>');
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-    $dompdf->stream("invoice-order-{$order_id}.pdf", ["Attachment" => false]);
+    $dompdf = new Dompdf($options);//dompdf instance
+    $dompdf->loadHtml('<html><head><meta charset="UTF-8">' . $style . '</head><body>' . $html . '</body></html>');//load the html content
+    $dompdf->setPaper('A4', 'portrait');//paper size and orientation
+    $dompdf->render();//render the pdf
+    $dompdf->stream("invoice-order-{$order_id}.pdf", ["Attachment" => false]);//open in browser not download
 
     exit;
 }
